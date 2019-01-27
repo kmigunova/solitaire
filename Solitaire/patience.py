@@ -14,7 +14,6 @@ WHITE = (255, 255, 255)
 
 pygame.init()
 
-
 # выбор кол-ва карт при раздаче
 # ДОДЕЛАТЬ !!!
 '''class Dialog(QFileDialog, Ui_Dialog):
@@ -36,11 +35,11 @@ HEIGHT = 600
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
 
-'''bg_music = ['sting_-_windmills_of_your_mind.mp3', 'sting_-_windmills_of_your_mind.mp3']
+# bg_music = ['sting_-_windmills_of_your_mind.mp3', 'sting_-_shape_of_my_heart.mp3']
 
-for elem in bg_music:
-    pygame.mixer.music.load(elem)
-    pygame.mixer.music.play(-1, 0.0)'''
+# for elem in bg_music:
+pygame.mixer.music.load('sting_-_windmills_of_your_mind.mp3')
+pygame.mixer.music.play(-1, 0.0)
 
 
 def terminate():
@@ -465,8 +464,8 @@ running = True
 
 
 def main():
-    pygame.display.set_caption("Solitaire")
     done = False
+    pygame.display.set_caption("Solitaire")
     suits = ["clubs", "spades", "hearts", "diamonds"]
 
     names = ["ace", "2", "3", "4", "5", "6",
@@ -516,6 +515,10 @@ def main():
 
     deck_list[0].hidden_cards.extend(card_list)
     game_over = False
+    fnt = 'Georgia'
+    text = pygame.font.SysFont(fnt, 30).render("Congratulations, "
+                                               "You Won!", True, BLACK)
+    # text = font.render("Congratulations, You Won!", True, BLACK)
     '''здесь будет сценарий на победу;
     после него - статистика'''
     while not done:
@@ -537,17 +540,21 @@ def main():
                     break
         else:
             game_over = True
-            scenary_over = True
+            # screen.fill(OLIVE)
+            # scenary_over = True
+            if game_over:
+                screen.fill(AQUA)
+                screen.blit(text, [250, 250])
             '''сценарий на проигрыш
             работает или нет, пока не знаю'''
-            while scenary_over:
+            '''while scenary_over:
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
                         scenary_over = False
                 # screen.fill(BLUE)
-                all_sprites.draw(screen)
-                all_sprites.update()
-                pygame.display.flip()
+                # all_sprites.draw(screen)
+                # all_sprites.update()
+                pygame.display.flip()'''
         screen.fill((0, 100, 0))
         # статистика
 
