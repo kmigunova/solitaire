@@ -3,13 +3,14 @@ import random
 import os
 import sys
 from pygame.locals import *
-
+# версия с красивой рубашкой карт,
+# но оооочень жёсткими багами
 
 AQUA = (0, 255, 255)
 BLACK = (0, 0, 0)
 GREEN = (0, 128, 0)
 OLIVE = (128, 128, 0)
-TEAL = (0, 128, 128)  # рубашка карт
+TEAL = (0, 128, 128)
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)
 BLUE = (0, 0, 130)
@@ -179,8 +180,7 @@ class Deck_1(Deck):
         i = self.y
         if len(self.hidden) > 0:
             for item in self.hidden:
-                pygame.draw.rect(screen, TEAL, [self.rect.left, i, 71, 96])
-                # screen.blit(back, [self.rect.left, i, 71, 96])
+                screen.blit(back, [self.rect.left, i, 71, 96])
                 pygame.draw.rect(screen, BLACK, [self.rect.left, i, 71, 96], 2)
                 i += 32
         if len(self.cards) > 0:
@@ -343,8 +343,8 @@ class Deck_2(Deck):
     def draw_card(self, screen, card_dict):
         x = self.x
         if len(self.hidden_cards) > 0:
-            # screen.blit(back, (30, 30))
-            pygame.draw.rect(screen, TEAL, [30, 30, 71, 96])
+            screen.blit(back, (30, 30))
+            # pygame.draw.rect(screen, TEAL, [30, 30, 71, 96])
             pygame.draw.rect(screen, BLACK, [30, 30, 71, 99], 2)  # обводка колоды
             if len(self.cards_list) > 0 and len(self.cards) > 0:
                 for item in self.cards:
