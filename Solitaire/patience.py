@@ -3,6 +3,9 @@ import random
 import os
 import sys
 from pygame.locals import *
+# в этой версии есть кнопка,
+# но она просто тыкабельна.
+# а ещё из-за неё оооооочень жёсткие баги
 
 
 AQUA = (0, 255, 255)

@@ -3,8 +3,8 @@ import random
 import os
 import sys
 from pygame.locals import *
-# версия с красивой рубашкой карт,
-# но оооочень жёсткими багами
+# багов нет,
+# но и кнопки тоже
 
 AQUA = (0, 255, 255)
 BLACK = (0, 0, 0)
@@ -458,7 +458,7 @@ running = True
 
 
 def main():
-    global button
+    # global button
     start_screen()
     done = False
     pygame.display.set_caption("Solitaire")
@@ -470,7 +470,7 @@ def main():
 
     card_dict = {}
 
-    button1 = pygame.Rect(10, 540, 100, 50)
+    # button1 = pygame.Rect(10, 540, 100, 50)
 
     for card in names:
         for suit in suits:
@@ -529,11 +529,11 @@ def main():
             if event.type == pygame.MOUSEBUTTONUP:
                 m_card.click_up(deck_list)
 
-            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            '''if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 pos = pygame.mouse.get_pos()
                 if button1.collidepoint(pos):
                     pygame.draw.rect(screen, BLUE, button1)
-                    print('box clicked!')
+                    print('box clicked!')'''
 
         for item in deck_list:
             if isinstance(item, Deck_3):
@@ -557,16 +557,16 @@ def main():
         # статистика
         txt = pygame.font.SysFont(fnt, 15).render("Правила "
                                                   "игры", True, BLACK)
-        button = pygame.Rect(10, 540, 100, 50)
-        pygame.draw.rect(screen, TEAL, button)
-        screen.blit(txt, [16, 550])
-        pygame.display.flip()
+        # button = pygame.Rect(10, 540, 100, 50)
+        # pygame.draw.rect(screen, TEAL, button)
+        # screen.blit(txt, [16, 550])
+        # pygame.display.flip()
 
         for item in deck_list:
             item.draw_card(screen, card_dict)
         m_card.draw(screen, card_dict)
         if game_over:
-            pygame.draw.rect(screen, AQUA, [0, 0, 800, 660])
+            pygame.draw.rect(screen, AQUA, [0, 0, 900, 660])
             screen.blit(text, [250, 250])
         pygame.display.flip()
 
