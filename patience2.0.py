@@ -28,7 +28,7 @@ fps = 50
 gravity = 0.25
 rules = 'https://grandgames.net/info/kosynkapravila'
 
-screen = pygame.display.set_mode(SIZE, pygame.RESIZABLE)
+screen = pygame.display.set_mode(SIZE, HWSURFACE | DOUBLEBUF | RESIZABLE)
 clock = pygame.time.Clock()
 
 pygame.mixer.music.load('sting_-_windmills_of_your_mind.mp3')
@@ -105,13 +105,13 @@ class Moved_card(object):
                         self.moved_card = []
                         if isinstance(self.cards, Deck_1):
                             self.cards.show_card()
-                        self.cards = None
+                        self.cards = ' '
                         break
             else:
                 self.cards.add_card(self.moved_card)
                 self.moved = False
                 self.moved_card = []
-                self.cards = None
+                self.cards = ' '
 
     def draw(self, screen, card_dict):
         if self.moved:
@@ -169,12 +169,10 @@ class Deck_1(Deck):
         if len(self.cards) > 0 or len(self.hidden) > 0:
             for i in range(len(card)):
                 self.rect.top += 32
-                # позволяет брать и делать колоду из 2+ карт
         else:
             for i in range(len(card)):
                 if i > 0:
                     self.rect.top += 32
-                    # а это не даёт ячейке под колодой уползти наверх
         self.cards.extend(card)
 
     def click_down(self, card):
@@ -201,7 +199,6 @@ class Deck_1(Deck):
                 self.cards.extend(lst)
 
     def show_card(self):
-        # нижняя карта в ячйеке открыта
         if len(self.cards) == 0 and len(self.hidden) > 0:
             self.cards.append(self.hidden.pop())
 
@@ -323,20 +320,17 @@ class Deck_2(Deck):
         x = self.x
         if len(self.hidden_cards) > 0:
             screen.blit(back, (30, 30))
-            # pygame.draw.rect(screen, TEAL, [30, 30, 71, 96])
-            pygame.draw.rect(screen, BLACK, [30, 30, 71, 99], 2)  # обводка колоды
+            pygame.draw.rect(screen, BLACK, [30, 30, 71, 99], 2)
             if len(self.cards_list) > 0 and len(self.cards) > 0:
                 for item in self.cards:
                     screen.blit(card_dict[item], [x, self.rect.top])
-                    x += 20  # расстояние между левыми верхними углами
-                    # видимых карт в колоде
+                    x += 20
         else:
             if len(self.cards_list) > 0 and len(self.cards) > 0:
                 for item in self.cards:
                     screen.blit(card_dict[item], [x, self.rect.top])
-                    x += 20  # на сколько видны 3 последние карты в колоде
+                    x += 20
             pygame.draw.ellipse(screen, OLIVE, [40, 40, 60, 60], 5)
-            # круг на внутренней стороне колоды
 
     def add_card(self, card):
         self.cards.extend(card)
@@ -432,35 +426,6 @@ def shuffle_cards():
     return r
 
 
-class Particle(pygame.sprite.Sprite):
-    fire = [load_background("star.png")]
-    for scale in (5, 10, 20, 50, 100):
-        fire.append(pygame.transform.scale(fire[0], (scale, scale)))
-
-    def __init__(self, pos, dx, dy):
-        super().__init__(all_sprites)
-        self.image = random.choice(self.fire)
-        self.rect = self.image.get_rect()
-
-        self.velocity = [dx, dy]
-        self.rect.x, self.rect.y = pos
-        self.gravity = gravity
-
-    def update(self):
-        self.velocity[1] += self.gravity
-        self.rect.x += self.velocity[0]
-        self.rect.y += self.velocity[1]
-        if not self.rect.colliderect(screen_rect):
-            self.kill()
-
-
-def create_particles(position):
-    particle_count = 20
-    numbers = range(-5, 6)
-    for _ in range(particle_count):
-        Particle(position, random.choice(numbers), random.choice(numbers))
-
-
 all_sprites = pygame.sprite.Group()
 
 
@@ -537,14 +502,18 @@ def main():
             game_over = True
             if game_over:
                 screen.fill(AQUA)
-                screen.blit(text, [250, 250])
+                screen.blit(TEXT[0], [250, 250])
                 while running:
                     for event in pygame.event.get():
                         if event.type == pygame.QUIT or (event.type == pygame.KEYUP and event.key == pygame.K_ESCAPE):
                             running = False
+
                         if event.type == pygame.MOUSEBUTTONDOWN:
-                            create_particles(pygame.mouse.get_pos())
-            # сценарий на проигрыш
+                            for item in deck_list:
+                                item.click_down(m_card)
+
+                        if event.type == pygame.MOUSEBUTTONUP:
+                            m_card.click_up(deck_list)
         screen.fill((0, 100, 0))
         # статистика
         pygame.draw.rect(screen, GREEN if not pos.colliderect(button1) else GRAY, button1)
