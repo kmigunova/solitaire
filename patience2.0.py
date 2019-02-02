@@ -3,34 +3,34 @@ import random
 import os
 import sys
 from pygame.locals import *
-# багов нет,
-# но и кнопки тоже
+import webbrowser
 
 AQUA = (0, 255, 255)
 BLACK = (0, 0, 0)
-GREEN = (0, 128, 0)
+GREEN = (0, 100, 0)
 OLIVE = (128, 128, 0)
 TEAL = (0, 128, 128)
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)
 BLUE = (0, 0, 130)
+GRAY = (100, 100, 100)
 
 pygame.init()
 
 
+TEXT = ["Congratulations, You Won!", "  New Game", "How To Play"]
 FPS = 100
-WIDTH = 820
-HEIGHT = 600
-type = 1
-# 1 - стандарт,
-# 2 - лас-вегас
+SIZE = WIDTH, HEIGHT = 820, 640
+TYPE = 1
+KOL = 1
+fnt = 'Times New Roman'
+fps = 50
+gravity = 0.25
+rules = 'https://grandgames.net/info/kosynkapravila'
 
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
+screen = pygame.display.set_mode(SIZE, pygame.RESIZABLE)
 clock = pygame.time.Clock()
 
-# bg_music = ['sting_-_windmills_of_your_mind.mp3', 'sting_-_shape_of_my_heart.mp3']
-
-# for elem in bg_music:
 pygame.mixer.music.load('sting_-_windmills_of_your_mind.mp3')
 pygame.mixer.music.play(-1, 0.0)
 
@@ -54,22 +54,6 @@ def load_background(name, colorkey=None):
             colorkey = image.get_at((0, 0))
         image.set_colorkey(colorkey)
     return image
-
-
-class GameOver(pygame.sprite.Sprite):
-    image = load_background("over.jpg")
-
-    def __init__(self, group):
-        super().__init__(group)
-        self.image = GameOver.image
-        self.rect = self.image.get_rect()
-        self.vx = 10
-        self.rect.left -= 600
-
-    def update(self):
-        if self.rect.left + self.rect.width < width or self.rect.left > 0:
-            self.image = GameOver.image
-            self.rect.left += self.vx
 
 
 def load_image(name, color_key=None):
@@ -106,7 +90,7 @@ def start_screen():
 
 
 class Moved_card(object):
-    moved = False  # все карты стоят ровно на своих местах
+    moved = False
     moved_card = []
     card_d = ()
     cards = None
@@ -130,25 +114,21 @@ class Moved_card(object):
                 self.cards = None
 
     def draw(self, screen, card_dict):
-        # передвижение карт на экране
         if self.moved:
             pos = pygame.mouse.get_pos()
             x = pos[0] - self.card_d[0]
             y = pos[1] - self.card_d[1]
             for item in self.moved_card:
                 screen.blit(card_dict[item], [x, y])
-                y += 32  # чем эта переменная больше, тем сильнее
-                # отдалаются друг от друга карты, когда тащишь несколько
+                y += 32
 
 
 class Deck(object):
-
     def __init__(self, x, y):
         self.cards = []
         self.rect = pygame.Rect(x, y, 71, 96)
 
     def check_pos(self):
-        # если курсор наведёен на карту
         pos = pygame.mouse.get_pos()
         if pos[0] >= self.rect.left and pos[0] <= self.rect.right:
             if pos[1] >= self.rect.top and pos[1] <= self.rect.bottom:
@@ -160,7 +140,6 @@ class Deck(object):
 
 
 class Deck_1(Deck):
-
     def __init__(self, x, y):
         Deck.__init__(self, x, y)
         self.y = y
@@ -174,8 +153,6 @@ class Deck_1(Deck):
                 self.rect.top += 32
 
     def draw_card(self, screen, card_dict):
-        # числа - это границы ячеек
-        # если их изменить, всё слипнется
         pygame.draw.rect(screen, BLACK, [self.rect.left, self.rect.top, 71, 96], 2)
         i = self.y
         if len(self.hidden) > 0:
@@ -192,14 +169,15 @@ class Deck_1(Deck):
         if len(self.cards) > 0 or len(self.hidden) > 0:
             for i in range(len(card)):
                 self.rect.top += 32
+                # позволяет брать и делать колоду из 2+ карт
         else:
             for i in range(len(card)):
                 if i > 0:
                     self.rect.top += 32
+                    # а это не даёт ячейке под колодой уползти наверх
         self.cards.extend(card)
 
     def click_down(self, card):
-        # при нажатии на мышку
         if len(self.cards) > 0:
             top = self.rect.top
             lst = []
@@ -223,6 +201,7 @@ class Deck_1(Deck):
                 self.cards.extend(lst)
 
     def show_card(self):
+        # нижняя карта в ячйеке открыта
         if len(self.cards) == 0 and len(self.hidden) > 0:
             self.cards.append(self.hidden.pop())
 
@@ -404,6 +383,7 @@ class Deck_3(Deck):
 
                     if next_card == card:
                         result = True
+
         return result
 
     def click_down(self, card):
@@ -418,13 +398,12 @@ class Deck_3(Deck):
         self.cards.extend(card)
 
     def draw_card(self, screen, card_dict):
-        pygame.draw.rect(screen, BLACK, [self.rect.left, self.rect.top, 71, 96], 2)  # ДОМА !!!!!!
+        pygame.draw.rect(screen, BLACK, [self.rect.left, self.rect.top, 71, 96], 2)
         if len(self.cards) > 0:
             screen.blit(card_dict[self.cards[-1]], [self.rect.left, self.rect.top])
 
 
 def shuffle_cards():
-    # перемешиваем карты
     r = []
     lst = ["ace_clubs", "2_clubs", "3_clubs", "4_clubs",
            "5_clubs", "6_clubs", "7_clubs", "8_clubs",
@@ -453,14 +432,41 @@ def shuffle_cards():
     return r
 
 
-# create_menu()
-running = True
+class Particle(pygame.sprite.Sprite):
+    fire = [load_background("star.png")]
+    for scale in (5, 10, 20, 50, 100):
+        fire.append(pygame.transform.scale(fire[0], (scale, scale)))
+
+    def __init__(self, pos, dx, dy):
+        super().__init__(all_sprites)
+        self.image = random.choice(self.fire)
+        self.rect = self.image.get_rect()
+
+        self.velocity = [dx, dy]
+        self.rect.x, self.rect.y = pos
+        self.gravity = gravity
+
+    def update(self):
+        self.velocity[1] += self.gravity
+        self.rect.x += self.velocity[0]
+        self.rect.y += self.velocity[1]
+        if not self.rect.colliderect(screen_rect):
+            self.kill()
+
+
+def create_particles(position):
+    particle_count = 20
+    numbers = range(-5, 6)
+    for _ in range(particle_count):
+        Particle(position, random.choice(numbers), random.choice(numbers))
+
+
+all_sprites = pygame.sprite.Group()
 
 
 def main():
-    # global button
-    start_screen()
     done = False
+    running = True
     pygame.display.set_caption("Solitaire")
     suits = ["clubs", "spades", "hearts", "diamonds"]
 
@@ -470,7 +476,8 @@ def main():
 
     card_dict = {}
 
-    # button1 = pygame.Rect(10, 540, 100, 50)
+    button1 = pygame.Rect(10, 580, 100, 50)
+    button2 = pygame.Rect(690, 580, 100, 50)
 
     for card in names:
         for suit in suits:
@@ -478,23 +485,10 @@ def main():
             card_dict[card + "_" + suit] = img
 
     card_list = shuffle_cards()
-    # всё, что находится на экране
     deck_list = [Deck_2(130, 30), Deck_1(30, 160), Deck_1(130, 160), Deck_1(230, 160),
                  Deck_1(330, 160), Deck_1(430, 160), Deck_1(530, 160), Deck_1(630, 160),
                  Deck_3(330, 30), Deck_3(430, 30), Deck_3(530, 30), Deck_3(630, 30)]
-    '''первое - координаты колоды;
-    второе - координаты карт в ячейке под колодой;
-    третье - координаты второй слева ячейки;
-    четвёртое - координаты третьей слева ячейки;
-    пятое - координаты четвёртой слева ячейуки;
-    шестое - координаты пятой слева ячейки;
-    седьмое - координаты шестой слева ячейки;
-    восьмое - координаты седьмой слева ячейки;
-    девятое - координаты первой ячейки дома:
-    десятое - координаты второй ячейки дома:
-    одиннадцатое - координаты третьей ячейки дома:
-    двенадцатое - координаты четвёртой ячейки дома:
-    '''
+
     m_card = Moved_card()
     deck_list[1].extend_list(card_list[:1])
     del card_list[:1]
@@ -513,11 +507,11 @@ def main():
 
     deck_list[0].hidden_cards.extend(card_list)
     game_over = False
-    fnt = 'Times New Roman'
-    text = pygame.font.SysFont(fnt, 35).render("Congratulations, "
-                                               "You Won!", True, BLACK)
-    # тут будут particles
+
+    start_screen()
+
     while not done:
+        pos = pygame.Rect([i - 1 for i in pygame.mouse.get_pos()], [2, 2])
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 done = True
@@ -529,11 +523,11 @@ def main():
             if event.type == pygame.MOUSEBUTTONUP:
                 m_card.click_up(deck_list)
 
-            '''if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                pos = pygame.mouse.get_pos()
-                if button1.collidepoint(pos):
-                    pygame.draw.rect(screen, BLUE, button1)
-                    print('box clicked!')'''
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if pos.colliderect(button1):
+                    main()
+                if pos.colliderect(button2):
+                    webbrowser.open_new_tab(url=rules)
 
         for item in deck_list:
             if isinstance(item, Deck_3):
@@ -544,30 +538,27 @@ def main():
             if game_over:
                 screen.fill(AQUA)
                 screen.blit(text, [250, 250])
+                while running:
+                    for event in pygame.event.get():
+                        if event.type == pygame.QUIT or (event.type == pygame.KEYUP and event.key == pygame.K_ESCAPE):
+                            running = False
+                        if event.type == pygame.MOUSEBUTTONDOWN:
+                            create_particles(pygame.mouse.get_pos())
             # сценарий на проигрыш
-            '''while scenary_over:
-                for event in pygame.event.get():
-                    if event.type == pygame.QUIT:
-                        scenary_over = False
-                # screen.fill(BLUE)
-                # all_sprites.draw(screen)
-                # all_sprites.update()
-                pygame.display.flip()'''
         screen.fill((0, 100, 0))
         # статистика
-        txt = pygame.font.SysFont(fnt, 15).render("Правила "
-                                                  "игры", True, BLACK)
-        # button = pygame.Rect(10, 540, 100, 50)
-        # pygame.draw.rect(screen, TEAL, button)
-        # screen.blit(txt, [16, 550])
-        # pygame.display.flip()
+        pygame.draw.rect(screen, GREEN if not pos.colliderect(button1) else GRAY, button1)
+        screen.blit(pygame.font.SysFont(fnt, 15).render(TEXT[1], True, BLACK), [16, 590])
+
+        pygame.draw.rect(screen, GREEN if not pos.colliderect(button2) else GRAY, button2)
+        screen.blit(pygame.font.SysFont(fnt, 15).render(TEXT[2], True, BLACK), [696, 590])
 
         for item in deck_list:
             item.draw_card(screen, card_dict)
         m_card.draw(screen, card_dict)
         if game_over:
             pygame.draw.rect(screen, AQUA, [0, 0, 900, 660])
-            screen.blit(text, [250, 250])
+            screen.blit(pygame.font.SysFont(fnt, 35).render(TEXT[0], True, BLACK), [250, 250])
         pygame.display.flip()
 
         clock.tick(20)
