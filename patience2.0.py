@@ -90,10 +90,12 @@ def start_screen():
 
 
 class Moved_card(object):
-    moved = False
-    moved_card = []
-    card_d = ()
-    cards = None
+
+    def __init__(self):
+        self.moved = False
+        self.moved_card = []
+        self.card_d = ()
+        self.cards = []
 
     def click_up(self, deck_list):
         if len(self.moved_card) > 0:
@@ -105,13 +107,13 @@ class Moved_card(object):
                         self.moved_card = []
                         if isinstance(self.cards, Deck_1):
                             self.cards.show_card()
-                        self.cards = ' '
+                        self.cards = []
                         break
             else:
                 self.cards.add_card(self.moved_card)
                 self.moved = False
                 self.moved_card = []
-                self.cards = ' '
+                self.cards = []
 
     def draw(self, screen, card_dict):
         if self.moved:
