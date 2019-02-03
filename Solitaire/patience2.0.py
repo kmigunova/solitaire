@@ -3,7 +3,7 @@ import random
 import os
 import sys
 from pygame.locals import *
-import webbrowser
+
 
 AQUA = (0, 255, 255)
 BLACK = (0, 0, 0)
@@ -26,7 +26,6 @@ KOL = 1
 fnt = 'Times New Roman'
 fps = 50
 gravity = 0.25
-rules = 'https://grandgames.net/info/kosynkapravila'
 
 screen = pygame.display.set_mode(SIZE, HWSURFACE | DOUBLEBUF | RESIZABLE)
 clock = pygame.time.Clock()
@@ -494,7 +493,7 @@ def main():
                 if pos.colliderect(button1):
                     main()
                 if pos.colliderect(button2):
-                    webbrowser.open_new_tab(url=rules)
+                    pass
 
         for item in deck_list:
             if isinstance(item, Deck_3):
