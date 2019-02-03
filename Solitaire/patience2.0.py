@@ -2,7 +2,11 @@ import pygame
 import random
 import os
 import sys
+import pickle
+from copy import deepcopy
+import deck
 from pygame.locals import *
+import time
 
 
 AQUA = (0, 255, 255)
@@ -29,6 +33,7 @@ gravity = 0.25
 
 screen = pygame.display.set_mode(SIZE, HWSURFACE | DOUBLEBUF | RESIZABLE)
 clock = pygame.time.Clock()
+vremya = pygame.time.get_ticks()
 
 pygame.mixer.music.load('sting_-_windmills_of_your_mind.mp3')
 pygame.mixer.music.play(-1, 0.0)
@@ -477,6 +482,7 @@ def main():
     start_screen()
 
     while not done:
+        print(vremya)
         pos = pygame.Rect([i - 1 for i in pygame.mouse.get_pos()], [2, 2])
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
