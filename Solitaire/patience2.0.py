@@ -22,18 +22,16 @@ GRAY = (100, 100, 100)
 pygame.init()
 
 
-TEXT = ["Congratulations, You Won!", "  New Game", "How To Play"]
+TEXT = ["Congratulations, You Won!", "New Game", "    Mute", "  Unmute"]
 FPS = 100
 SIZE = WIDTH, HEIGHT = 820, 640
 TYPE = 1
 KOL = 1
 fnt = 'Times New Roman'
-fps = 50
-gravity = 0.25
+score = 0
 
 screen = pygame.display.set_mode(SIZE, HWSURFACE | DOUBLEBUF | RESIZABLE)
 clock = pygame.time.Clock()
-vremya = pygame.time.get_ticks()
 
 pygame.mixer.music.load('sting_-_windmills_of_your_mind.mp3')
 pygame.mixer.music.play(-1, 0.0)
@@ -133,6 +131,7 @@ class Deck(object):
     def __init__(self, x, y):
         self.cards = []
         self.rect = pygame.Rect(x, y, 71, 96)
+        self.score = 0
 
     def check_pos(self):
         pos = pygame.mouse.get_pos()
@@ -150,6 +149,7 @@ class Deck_1(Deck):
         Deck.__init__(self, x, y)
         self.y = y
         self.hidden = []
+        self.score = 0
 
     def extend_list(self, lst):
         self.hidden.extend(lst)
@@ -275,7 +275,7 @@ class Deck_1(Deck):
                 if next_card in card:
                     result = True
 
-        return result
+        return result, self.score
 
 
 class Deck_2(Deck):
@@ -436,8 +436,10 @@ all_sprites = pygame.sprite.Group()
 
 
 def main():
+    begin = pygame.time.get_ticks()
     done = False
     running = True
+    playing = True
     pygame.display.set_caption("Solitaire")
     suits = ["clubs", "spades", "hearts", "diamonds"]
 
@@ -482,7 +484,6 @@ def main():
     start_screen()
 
     while not done:
-        print(vremya)
         pos = pygame.Rect([i - 1 for i in pygame.mouse.get_pos()], [2, 2])
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -499,7 +500,14 @@ def main():
                 if pos.colliderect(button1):
                     main()
                 if pos.colliderect(button2):
-                    pass
+                    if playing:
+                        pygame.mixer.music.stop()
+                        pygame.draw.rect(screen, GREEN if not pos.colliderect(button2) else GRAY, button2)
+                        screen.blit(pygame.font.SysFont(fnt, 20).render(TEXT[3], True, BLACK), [696, 590])
+                        playing = False
+                    else:
+                        pygame.mixer.music.play(-1, 0.0)
+                        playing = True
 
         for item in deck_list:
             if isinstance(item, Deck_3):
@@ -508,6 +516,9 @@ def main():
         else:
             game_over = True
             if game_over:
+                fin = pygame.time.get_ticks()
+                res = (fin - begin) / 1000
+                print(res)
                 screen.fill(AQUA)
                 screen.blit(TEXT[0], [250, 250])
                 while running:
@@ -524,17 +535,17 @@ def main():
         screen.fill((0, 100, 0))
         # статистика
         pygame.draw.rect(screen, GREEN if not pos.colliderect(button1) else GRAY, button1)
-        screen.blit(pygame.font.SysFont(fnt, 15).render(TEXT[1], True, BLACK), [16, 590])
+        screen.blit(pygame.font.SysFont(fnt, 20).render(TEXT[1], True, BLACK), [16, 590])
 
         pygame.draw.rect(screen, GREEN if not pos.colliderect(button2) else GRAY, button2)
-        screen.blit(pygame.font.SysFont(fnt, 15).render(TEXT[2], True, BLACK), [696, 590])
+        screen.blit(pygame.font.SysFont(fnt, 20).render(TEXT[2], True, BLACK), [696, 590])
 
         for item in deck_list:
             item.draw_card(screen, card_dict)
         m_card.draw(screen, card_dict)
         if game_over:
             pygame.draw.rect(screen, AQUA, [0, 0, 900, 660])
-            screen.blit(pygame.font.SysFont(fnt, 35).render(TEXT[0], True, BLACK), [250, 250])
+            # screen.blit(pygame.font.SysFont(fnt, 35).render(TEXT[0], True, BLACK), [250, 250])
         pygame.display.flip()
 
         clock.tick(20)
