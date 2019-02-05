@@ -24,11 +24,10 @@ pygame.init()
 
 TEXT = ["Congratulations, You Won!", "New Game", "    Mute", "  Unmute"]
 FPS = 100
-SIZE = WIDTH, HEIGHT = 820, 640
+SIZE = WIDTH, HEIGHT = 820, 670
 TYPE = 1
 KOL = 1
 fnt = 'Times New Roman'
-score = 0
 
 screen = pygame.display.set_mode(SIZE, HWSURFACE | DOUBLEBUF | RESIZABLE)
 clock = pygame.time.Clock()
@@ -91,13 +90,28 @@ def start_screen():
         clock.tick(FPS)
 
 
+def finish_screen():
+    screen.fill(TEAL)
+    screen.blit(pygame.font.SysFont(fnt, 35).render(TEXT[0], True, BLACK), [250, 250])
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            else:
+                main()
+        pygame.display.flip()
+        clock.tick(FPS)
+    return
+
+
 class Moved_card(object):
 
     def __init__(self):
         self.moved = False
-        self.moved_card = []
+        self.moved_card = list()
         self.card_d = ()
-        self.cards = []
+        self.cards = None
 
     def click_up(self, deck_list):
         if len(self.moved_card) > 0:
@@ -106,16 +120,16 @@ class Moved_card(object):
                     if item.check_pos() and item.check_card(self.moved_card):
                         item.add_card(self.moved_card)
                         self.moved = False
-                        self.moved_card = []
+                        self.moved_card = list()
                         if isinstance(self.cards, Deck_1):
                             self.cards.show_card()
-                        self.cards = []
+                        self.cards = None
                         break
             else:
                 self.cards.add_card(self.moved_card)
                 self.moved = False
-                self.moved_card = []
-                self.cards = []
+                self.moved_card = list()
+                self.cards = None
 
     def draw(self, screen, card_dict):
         if self.moved:
@@ -149,7 +163,6 @@ class Deck_1(Deck):
         Deck.__init__(self, x, y)
         self.y = y
         self.hidden = []
-        self.score = 0
 
     def extend_list(self, lst):
         self.hidden.extend(lst)
@@ -208,7 +221,7 @@ class Deck_1(Deck):
         if len(self.cards) == 0 and len(self.hidden) > 0:
             self.cards.append(self.hidden.pop())
 
-    def check_card(self, moved_card):
+    def check_card(self,moved_card):
         card = moved_card[0]
         result = False
         if len(self.cards) == 0:
@@ -275,7 +288,7 @@ class Deck_1(Deck):
                 if next_card in card:
                     result = True
 
-        return result, self.score
+        return result
 
 
 class Deck_2(Deck):
@@ -436,10 +449,25 @@ all_sprites = pygame.sprite.Group()
 
 
 def main():
+    global score, vremya, best_time, best_score, total_score, time_bonus, played, won, pers
+
+    file_read = open('statistics.txt', encoding='UTF-8', mode='r').read().split('\n')
+    print(file_read)
+    score = 0
+    vremya = 0.0
+    best_score = int(file_read[4])
+    best_time = float(file_read[5])
+    total_score = 0
+    time_bonus = 0
+    played = int(file_read[6])
+    won = int(file_read[7])
+    pers = int(file_read[8])
+
     begin = pygame.time.get_ticks()
     done = False
     running = True
     playing = True
+    played += 1
     pygame.display.set_caption("Solitaire")
     suits = ["clubs", "spades", "hearts", "diamonds"]
 
@@ -449,8 +477,8 @@ def main():
 
     card_dict = {}
 
-    button1 = pygame.Rect(10, 580, 100, 50)
-    button2 = pygame.Rect(690, 580, 100, 50)
+    button1 = pygame.Rect(10, 610, 100, 50)
+    button2 = pygame.Rect(690, 610, 100, 50)
 
     for card in names:
         for suit in suits:
@@ -498,6 +526,8 @@ def main():
 
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 if pos.colliderect(button1):
+                    played += 1
+                    print(played)
                     main()
                 if pos.colliderect(button2):
                     if playing:
@@ -516,11 +546,28 @@ def main():
         else:
             game_over = True
             if game_over:
+                won += 1
                 fin = pygame.time.get_ticks()
-                res = (fin - begin) / 1000
-                print(res)
-                screen.fill(AQUA)
-                screen.blit(TEXT[0], [250, 250])
+                vremya = (fin - begin) / 1000
+                if total_score > best_score:
+                    best_score = total_score
+                if vremya < best_time:
+                    best_time = vremya
+                file_write = open('statistics.txt', encoding='UTF-8', mode='w')
+                file_write.seek(0)
+                file_write.truncate()
+                file_read[0] = score
+                file_read[1] = vremya
+                file_read[2] = time_bonus
+                file_read[3] = total_score
+                file_read[4] = best_score
+                file_read[5] = best_time
+                file_read[6] = played
+                file_read[7] = won
+                file_read[8] = int(played / won)
+                for elem in file_read:
+                    file_write.write(elem)
+                finish_screen()
                 while running:
                     for event in pygame.event.get():
                         if event.type == pygame.QUIT or (event.type == pygame.KEYUP and event.key == pygame.K_ESCAPE):
@@ -535,17 +582,17 @@ def main():
         screen.fill((0, 100, 0))
         # статистика
         pygame.draw.rect(screen, GREEN if not pos.colliderect(button1) else GRAY, button1)
-        screen.blit(pygame.font.SysFont(fnt, 20).render(TEXT[1], True, BLACK), [16, 590])
+        screen.blit(pygame.font.SysFont(fnt, 20).render(TEXT[1], True, BLACK), [16, 620])
 
         pygame.draw.rect(screen, GREEN if not pos.colliderect(button2) else GRAY, button2)
-        screen.blit(pygame.font.SysFont(fnt, 20).render(TEXT[2], True, BLACK), [696, 590])
+        screen.blit(pygame.font.SysFont(fnt, 20).render(TEXT[2], True, BLACK), [696, 620])
 
         for item in deck_list:
             item.draw_card(screen, card_dict)
         m_card.draw(screen, card_dict)
         if game_over:
-            pygame.draw.rect(screen, AQUA, [0, 0, 900, 660])
-            # screen.blit(pygame.font.SysFont(fnt, 35).render(TEXT[0], True, BLACK), [250, 250])
+            pygame.draw.rect(screen, TEAL, [0, 0, 1000, 1000])
+            screen.blit(pygame.font.SysFont(fnt, 35).render(TEXT[0], True, BLACK), [250, 250])
         pygame.display.flip()
 
         clock.tick(20)
