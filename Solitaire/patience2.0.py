@@ -2,11 +2,9 @@ import pygame
 import random
 import os
 import sys
-import pickle
-from copy import deepcopy
-import deck
 from pygame.locals import *
 import time
+# https://drive.google.com/file/d/0B9fnh8OclfJSNTRVbDE4UXY4VTQ/view
 
 
 AQUA = (0, 255, 255)
@@ -18,15 +16,16 @@ WHITE = (255, 255, 255)
 RED = (255, 0, 0)
 BLUE = (0, 0, 130)
 GRAY = (100, 100, 100)
+PINK = (252, 15, 192)
 
 pygame.init()
 
 
-TEXT = ["Congratulations, You Won!", "New Game", "    Mute", "  Unmute"]
+TEXT = ["Congratulations, You Won!", "New Game", "    Mute",
+        "How many cards in deal?", "Play Again"]
 FPS = 100
 SIZE = WIDTH, HEIGHT = 820, 670
-TYPE = 1
-KOL = 1
+
 fnt = 'Times New Roman'
 
 screen = pygame.display.set_mode(SIZE, HWSURFACE | DOUBLEBUF | RESIZABLE)
@@ -93,19 +92,58 @@ def start_screen():
 def finish_screen():
     screen.fill(TEAL)
     screen.blit(pygame.font.SysFont(fnt, 35).render(TEXT[0], True, BLACK), [250, 250])
+    screen.blit(pygame.font.SysFont(fnt, 35).render('Your Time: ' + str(vremya), True, BLACK), [250, 400])
+
+    pos = pygame.Rect([i - 1 for i in pygame.mouse.get_pos()], [2, 2])
+
+    button = pygame.Rect(410, 610, 100, 50)
+    pygame.draw.rect(screen, TEAL if not pos.colliderect(button) else GRAY, button)
+    screen.blit(pygame.font.SysFont(fnt, 20).render(TEXT[4], True, BLACK), [415, 590])
 
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
-            else:
-                main()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                    main()
         pygame.display.flip()
         clock.tick(FPS)
-    return
 
 
-class Moved_card(object):
+'''def card_choice():
+    global kol
+    kol = 3
+
+    screen.fill(WHITE)
+    screen.blit(pygame.font.SysFont(fnt, 35).render(TEXT[3], True, BLACK), [40, 10])
+
+    pos = pygame.Rect([i - 1 for i in pygame.mouse.get_pos()], [2, 2])
+
+    button3 = pygame.Rect(300, 90, 200, 150)
+    button4 = pygame.Rect(300, 280, 200, 150)
+
+    pygame.draw.rect(screen, WHITE if not pos.colliderect(button3) else PINK, button3, 5)
+    pygame.draw.rect(screen, WHITE if not pos.colliderect(button4) else PINK, button4, 5)
+
+    screen.blit(pygame.font.SysFont(fnt, 20).render("3", True, BLACK), [400, 360])
+    screen.blit(pygame.font.SysFont(fnt, 20).render("1", True, BLACK), [400, 170])
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if pos.colliderect(button3):
+                    kol = 1
+                    return kol
+                elif pos.colliderect(button4):
+                    kol = 3
+                    return kol
+        pygame.display.flip()
+        clock.tick(FPS)'''
+
+
+class MovedCard(object):
 
     def __init__(self):
         self.moved = False
@@ -116,12 +154,12 @@ class Moved_card(object):
     def click_up(self, deck_list):
         if len(self.moved_card) > 0:
             for item in deck_list:
-                if not isinstance(item, Deck_2):
+                if not isinstance(item, Deck2):
                     if item.check_pos() and item.check_card(self.moved_card):
                         item.add_card(self.moved_card)
                         self.moved = False
                         self.moved_card = list()
-                        if isinstance(self.cards, Deck_1):
+                        if isinstance(self.cards, Deck1):
                             self.cards.show_card()
                         self.cards = None
                         break
@@ -145,7 +183,6 @@ class Deck(object):
     def __init__(self, x, y):
         self.cards = []
         self.rect = pygame.Rect(x, y, 71, 96)
-        self.score = 0
 
     def check_pos(self):
         pos = pygame.mouse.get_pos()
@@ -158,7 +195,7 @@ class Deck(object):
             return False
 
 
-class Deck_1(Deck):
+class Deck1(Deck):
     def __init__(self, x, y):
         Deck.__init__(self, x, y)
         self.y = y
@@ -221,7 +258,7 @@ class Deck_1(Deck):
         if len(self.cards) == 0 and len(self.hidden) > 0:
             self.cards.append(self.hidden.pop())
 
-    def check_card(self,moved_card):
+    def check_card(self, moved_card):
         card = moved_card[0]
         result = False
         if len(self.cards) == 0:
@@ -258,6 +295,7 @@ class Deck_1(Deck):
 
                     if next_card in card:
                         result = True
+
             elif "hearts" in self.cards[-1] or "diamonds" in self.cards[-1]:
                 next_card = "X"
                 if "king" in self.cards[-1]:
@@ -288,10 +326,15 @@ class Deck_1(Deck):
                 if next_card in card:
                     result = True
 
+            '''if result:
+                score += 10
+
+            return score'''
+
         return result
 
 
-class Deck_2(Deck):
+class Deck2(Deck):
     def __init__(self, x, y):
         Deck.__init__(self, x, y)
         self.hidden_cards = []
@@ -317,13 +360,19 @@ class Deck_2(Deck):
             if flag:
                 self.rect.left = self.x
                 if len(self.hidden_cards) > 0:
-                    self.cards = []
-                    for i in range(3):
+                    if kol == 1:
+                        self.cards = []
                         c = self.hidden_cards.pop()
                         self.cards_list.insert(0, c)
                         self.cards.append(c)
-                        if len(self.hidden_cards) == 0 and i < 2:
-                            break
+                    else:
+                        self.cards = []
+                        for i in range(3):
+                            c = self.hidden_cards.pop()
+                            self.cards_list.insert(0, c)
+                            self.cards.append(c)
+                            if len(self.hidden_cards) == 0 and i < 2:
+                                break
 
                 else:
                     self.hidden_cards.extend(self.cards_list)
@@ -357,7 +406,7 @@ class Deck_2(Deck):
         self.rect.left += 20
 
 
-class Deck_3(Deck):
+class Deck3(Deck):
     def check_card(self, moved_card):
         result = False
         if len(moved_card) == 1:
@@ -396,6 +445,11 @@ class Deck_3(Deck):
 
                     if next_card == card:
                         result = True
+
+                '''if result:
+                    score += 20
+
+                return score'''
 
         return result
 
@@ -449,25 +503,14 @@ all_sprites = pygame.sprite.Group()
 
 
 def main():
-    global score, vremya, best_time, best_score, total_score, time_bonus, played, won, pers
-
-    file_read = open('statistics.txt', encoding='UTF-8', mode='r').read().split('\n')
-    print(file_read)
-    score = 0
-    vremya = 0.0
-    best_score = int(file_read[4])
-    best_time = float(file_read[5])
-    total_score = 0
-    time_bonus = 0
-    played = int(file_read[6])
-    won = int(file_read[7])
-    pers = int(file_read[8])
+    global vremya, score, kol
 
     begin = pygame.time.get_ticks()
     done = False
     running = True
     playing = True
-    played += 1
+
+    score = 0
     pygame.display.set_caption("Solitaire")
     suits = ["clubs", "spades", "hearts", "diamonds"]
 
@@ -480,17 +523,19 @@ def main():
     button1 = pygame.Rect(10, 610, 100, 50)
     button2 = pygame.Rect(690, 610, 100, 50)
 
+    kol = random.choice([1, 3])
+
     for card in names:
         for suit in suits:
             img = pygame.image.load("data/" + card + "_" + suit + ".png").convert()
             card_dict[card + "_" + suit] = img
 
     card_list = shuffle_cards()
-    deck_list = [Deck_2(130, 30), Deck_1(30, 160), Deck_1(130, 160), Deck_1(230, 160),
-                 Deck_1(330, 160), Deck_1(430, 160), Deck_1(530, 160), Deck_1(630, 160),
-                 Deck_3(330, 30), Deck_3(430, 30), Deck_3(530, 30), Deck_3(630, 30)]
+    deck_list = [Deck2(130, 30), Deck1(30, 160), Deck1(130, 160), Deck1(230, 160),
+                 Deck1(330, 160), Deck1(430, 160), Deck1(530, 160), Deck1(630, 160),
+                 Deck3(330, 30), Deck3(430, 30), Deck3(530, 30), Deck3(630, 30)]
 
-    m_card = Moved_card()
+    m_card = MovedCard()
     deck_list[1].extend_list(card_list[:1])
     del card_list[:1]
     deck_list[2].extend_list(card_list[:2])
@@ -526,8 +571,6 @@ def main():
 
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 if pos.colliderect(button1):
-                    played += 1
-                    print(played)
                     main()
                 if pos.colliderect(button2):
                     if playing:
@@ -540,33 +583,14 @@ def main():
                         playing = True
 
         for item in deck_list:
-            if isinstance(item, Deck_3):
+            if isinstance(item, Deck3):
                 if len(item.cards) != 13:
                     break
         else:
             game_over = True
             if game_over:
-                won += 1
                 fin = pygame.time.get_ticks()
                 vremya = (fin - begin) / 1000
-                if total_score > best_score:
-                    best_score = total_score
-                if vremya < best_time:
-                    best_time = vremya
-                file_write = open('statistics.txt', encoding='UTF-8', mode='w')
-                file_write.seek(0)
-                file_write.truncate()
-                file_read[0] = score
-                file_read[1] = vremya
-                file_read[2] = time_bonus
-                file_read[3] = total_score
-                file_read[4] = best_score
-                file_read[5] = best_time
-                file_read[6] = played
-                file_read[7] = won
-                file_read[8] = int(played / won)
-                for elem in file_read:
-                    file_write.write(elem)
                 finish_screen()
                 while running:
                     for event in pygame.event.get():
@@ -580,7 +604,6 @@ def main():
                         if event.type == pygame.MOUSEBUTTONUP:
                             m_card.click_up(deck_list)
         screen.fill((0, 100, 0))
-        # статистика
         pygame.draw.rect(screen, GREEN if not pos.colliderect(button1) else GRAY, button1)
         screen.blit(pygame.font.SysFont(fnt, 20).render(TEXT[1], True, BLACK), [16, 620])
 
@@ -591,8 +614,7 @@ def main():
             item.draw_card(screen, card_dict)
         m_card.draw(screen, card_dict)
         if game_over:
-            pygame.draw.rect(screen, TEAL, [0, 0, 1000, 1000])
-            screen.blit(pygame.font.SysFont(fnt, 35).render(TEXT[0], True, BLACK), [250, 250])
+            finish_screen()
         pygame.display.flip()
 
         clock.tick(20)
