@@ -22,7 +22,7 @@ pygame.init()
 
 
 TEXT = ["Congratulations, You Won!", "New Game", "    Mute",
-        "How many cards in deal?", "Play Again"]
+        "How many cards in deal?", "Tap To See Statistics"]
 FPS = 100
 SIZE = WIDTH, HEIGHT = 820, 670
 
@@ -31,8 +31,8 @@ fnt = 'Times New Roman'
 screen = pygame.display.set_mode(SIZE, HWSURFACE | DOUBLEBUF | RESIZABLE)
 clock = pygame.time.Clock()
 
-pygame.mixer.music.load('sting_-_windmills_of_your_mind.mp3')
-pygame.mixer.music.play(-1, 0.0)
+'''pygame.mixer.music.load('sting_-_windmills_of_your_mind.mp3')
+pygame.mixer.music.play(-1, 0.0)'''
 
 
 def terminate():
@@ -92,20 +92,15 @@ def start_screen():
 def finish_screen():
     screen.fill(TEAL)
     screen.blit(pygame.font.SysFont(fnt, 35).render(TEXT[0], True, BLACK), [250, 250])
-    screen.blit(pygame.font.SysFont(fnt, 35).render('Your Time: ' + str(vremya), True, BLACK), [250, 400])
-
-    pos = pygame.Rect([i - 1 for i in pygame.mouse.get_pos()], [2, 2])
-
-    button = pygame.Rect(410, 610, 100, 50)
-    pygame.draw.rect(screen, TEAL if not pos.colliderect(button) else GRAY, button)
     screen.blit(pygame.font.SysFont(fnt, 20).render(TEXT[4], True, BLACK), [415, 590])
+    # screen.blit(pygame.font.SysFont(fnt, 35).render('Your Time: ' + str(vremya), True, BLACK), [250, 400])
 
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
             if event.type == pygame.MOUSEBUTTONDOWN:
-                    main()
+                    return
         pygame.display.flip()
         clock.tick(FPS)
 
@@ -135,12 +130,12 @@ def finish_screen():
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 if pos.colliderect(button3):
                     kol = 1
-                    return kol
                 elif pos.colliderect(button4):
                     kol = 3
-                    return kol
         pygame.display.flip()
-        clock.tick(FPS)'''
+        clock.tick(FPS)
+        f(kol)
+        return'''
 
 
 class MovedCard(object):
@@ -155,7 +150,7 @@ class MovedCard(object):
         if len(self.moved_card) > 0:
             for item in deck_list:
                 if not isinstance(item, Deck2):
-                    if item.check_pos() and item.check_card(self.moved_card):
+                    if item.check_pos() and item.check_card(self.moved_card, score):
                         item.add_card(self.moved_card)
                         self.moved = False
                         self.moved_card = list()
@@ -258,12 +253,13 @@ class Deck1(Deck):
         if len(self.cards) == 0 and len(self.hidden) > 0:
             self.cards.append(self.hidden.pop())
 
-    def check_card(self, moved_card):
+    def check_card(self, moved_card, score):
         card = moved_card[0]
         result = False
         if len(self.cards) == 0:
             if "king" in card:
                 result = True
+                score += 5
         else:
             if "hearts" in card or "diamonds" in card:
                 if "spades" in self.cards[-1] or "clubs" in self.cards[-1]:
@@ -295,6 +291,7 @@ class Deck1(Deck):
 
                     if next_card in card:
                         result = True
+                        score += 10
 
             elif "hearts" in self.cards[-1] or "diamonds" in self.cards[-1]:
                 next_card = "X"
@@ -325,13 +322,9 @@ class Deck1(Deck):
 
                 if next_card in card:
                     result = True
+                    score += 10
 
-            '''if result:
-                score += 10
-
-            return score'''
-
-        return result
+        return result, score
 
 
 class Deck2(Deck):
@@ -407,13 +400,14 @@ class Deck2(Deck):
 
 
 class Deck3(Deck):
-    def check_card(self, moved_card):
+    def check_card(self, moved_card, score):
         result = False
         if len(moved_card) == 1:
             card = moved_card[0]
             if len(self.cards) == 0:
                 if card[:3] == 'ace':
                     result = True
+                    score += 15
             else:
                 suit = self.cards[0][4:]
                 next_card = ''
@@ -445,13 +439,9 @@ class Deck3(Deck):
 
                     if next_card == card:
                         result = True
+                        score += 20
 
-                '''if result:
-                    score += 20
-
-                return score'''
-
-        return result
+        return result, score
 
     def click_down(self, card):
         if self.check_pos() and len(self.cards) > 0:
@@ -468,6 +458,88 @@ class Deck3(Deck):
         pygame.draw.rect(screen, BLACK, [self.rect.left, self.rect.top, 71, 96], 2)
         if len(self.cards) > 0:
             screen.blit(card_dict[self.cards[-1]], [self.rect.left, self.rect.top])
+
+
+class Statistics:
+
+    def __init__(self):
+        self.score = 0
+        self.vremya = 0.0
+        self.best_score = 0
+        self.best_time = 1234.98
+        self.total_score = 0
+        self.time_bonus = 0
+        self.played = 0
+        self.won = 0
+        self.percentage = 0
+
+    def open_read_file(self):
+        file_read = open('statistics.txt', encoding='UTF-8', mode='r').read().split('\n')
+        self.best_score = file_read[0]
+        self.best_time = file_read[1]
+        self.played = file_read[2]
+        self.won = file_read[3]
+
+        file_read.close()
+
+    def open_write_file(self):
+        self.file_write = open('statistics.txt', encoding='UTF-8', mode='w')
+
+    def clear_file(self):
+        self.file_write.seek(0)
+        self.file_write.truncate()
+
+    def rewrite_file(self, game_over=False, vremya=123456.78, score=0):
+        if game_over:
+            self.won += 1
+            if score > self.best_score:
+                self.best_score = score
+            if vremya < self.best_time:
+                self.best_time = vremya
+        self.played += 1
+        self.file_write.write(str(self.best_score))
+        self.file_write.write('\n')
+        self.file_write.write(str(self.best_time))
+        self.file_write.write('\n')
+        self.file_write.write(str(self.played))
+        self.file_write.write('\n')
+        self.file_write.write(str(self.won))
+        self.file_write.write('\n')
+        try:
+            self.file_write.write(str((self.won // self.played) * 100))
+        except ZeroDivisionError:
+            self.file_write.write('0')
+
+        self.file_write.close()
+
+    def show_stat(self, vremya):
+        screen.blit(pygame.font.SysFont(fnt, 35).render('Your Time:         ' + str(vremya),
+                                                        True, BLACK), [50, 100])
+        screen.blit(pygame.font.SysFont(fnt, 35).render('Best Time:         ' + str(self.best_time),
+                                                        True, BLACK), [50, 150])
+        screen.blit(pygame.font.SysFont(fnt, 35).render('Your Score:         ' + str(self.score),
+                                                        True, BLACK), [50, 200])
+        screen.blit(pygame.font.SysFont(fnt, 35).render('Best Score:         ' + str(self.best_score),
+                                                        True, BLACK), [50, 250])
+        screen.blit(pygame.font.SysFont(fnt, 35).render('Games Played:         ' + str(self.played),
+                                                        True, BLACK), [50, 300])
+        screen.blit(pygame.font.SysFont(fnt, 35).render('Games Won:         ' + str(self.won),
+                                                        True, BLACK), [50, 350])
+        screen.blit(pygame.font.SysFont(fnt, 35).render('Win Percentage:         ' + str(self.percentage),
+                                                        True, BLACK), [50, 400])
+
+        button5 = pygame.Rect(WIDTH // 2, 500, 100, 50)
+
+        pos = pygame.Rect([i - 1 for i in pygame.mouse.get_pos()], [2, 2])
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if pos.colliderect(button5):
+                    main()
+
+        pygame.draw.rect(screen, GREEN if not pos.colliderect(button5) else GRAY, button5)
+        screen.blit(pygame.font.SysFont(fnt, 15).render("Tap To Continue", True, BLACK), [415, 505])
 
 
 def shuffle_cards():
@@ -503,7 +575,9 @@ all_sprites = pygame.sprite.Group()
 
 
 def main():
-    global vremya, score, kol
+    global kol, vremya, game_over, score
+
+    stat = Statistics()
 
     begin = pygame.time.get_ticks()
     done = False
@@ -560,6 +634,9 @@ def main():
         pos = pygame.Rect([i - 1 for i in pygame.mouse.get_pos()], [2, 2])
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                stat.open_write_file()
+                stat.clear_file()
+                stat.rewrite_file()
                 done = True
 
             if event.type == pygame.MOUSEBUTTONDOWN:
@@ -571,6 +648,9 @@ def main():
 
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 if pos.colliderect(button1):
+                    stat.open_write_file()
+                    stat.clear_file()
+                    stat.rewrite_file()
                     main()
                 if pos.colliderect(button2):
                     if playing:
@@ -591,7 +671,11 @@ def main():
             if game_over:
                 fin = pygame.time.get_ticks()
                 vremya = (fin - begin) / 1000
+                stat.open_write_file()
+                stat.clear_file()
+                stat.rewrite_file(True, vremya)
                 finish_screen()
+                stat.show_stat(vremya)
                 while running:
                     for event in pygame.event.get():
                         if event.type == pygame.QUIT or (event.type == pygame.KEYUP and event.key == pygame.K_ESCAPE):
