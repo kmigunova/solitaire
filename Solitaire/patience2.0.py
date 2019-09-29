@@ -2,9 +2,13 @@ import pygame
 import random
 import os
 import sys
+import webbrowser
 from pygame.locals import *
 import time
+
 # https://drive.google.com/file/d/0B9fnh8OclfJSNTRVbDE4UXY4VTQ/view
+
+rules = 'https://grandgames.net/info/kosynkapravila'
 
 
 AQUA = (0, 255, 255)
@@ -14,15 +18,17 @@ OLIVE = (128, 128, 0)
 TEAL = (0, 128, 128)
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)
-BLUE = (0, 0, 130)
+BLUE = (100, 90, 90)
 GRAY = (100, 100, 100)
 PINK = (252, 15, 192)
+VIOLET = (105, 14, 74)
 
 pygame.init()
 
 
 TEXT = ["Congratulations, You Won!", "New Game", "    Mute",
-        "How many cards in deal?", "Tap To See Statistics"]
+        "How many cards in deal?", "Tap To See Statistics",
+        " How To Play?", "Easy", "Medium", "Hard", "Change Theme"]
 FPS = 100
 SIZE = WIDTH, HEIGHT = 820, 670
 
@@ -76,14 +82,43 @@ back = load_image('back.png')
 
 
 def start_screen():
-    fon = pygame.transform.scale(load_background('bg.jpg'), (WIDTH, HEIGHT))
-    screen.blit(fon, (0, 0))
+    screen.fill(VIOLET)
+
+    rule = pygame.Rect(10, 610, 130, 50)
+    easy = pygame.Rect(200, 100, 400, 100)
+    medium = pygame.Rect(200, 220, 400, 100)
+    hard = pygame.Rect(200, 340, 400, 100)
+    change_back = pygame.Rect(680, 610, 130, 50)
+
+    pygame.draw.rect(screen, BLACK, easy, 6)
+    pygame.draw.rect(screen, BLACK, medium, 6)
+    pygame.draw.rect(screen, BLACK, hard, 6)
+    pygame.draw.rect(screen, BLACK, rule, 6)
+    pygame.draw.rect(screen, BLACK, change_back, 6)
+
+    screen.blit(pygame.font.SysFont(fnt, 20).render(TEXT[5], True, WHITE), [15, 620])
+    screen.blit(pygame.font.SysFont(fnt, 40).render(TEXT[6], True, WHITE), [350, 130])
+    screen.blit(pygame.font.SysFont(fnt, 40).render(TEXT[7], True, WHITE), [350, 250])
+    screen.blit(pygame.font.SysFont(fnt, 40).render(TEXT[8], True, WHITE), [350, 370])
+    screen.blit(pygame.font.SysFont(fnt, 20).render(TEXT[9], True, WHITE), [685, 620])
 
     while True:
+        pos = pygame.Rect([i - 1 for i in pygame.mouse.get_pos()], [2, 2])
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
-            elif event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
+
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if pos.colliderect(rule):
+                    webbrowser.open_new_tab(url=rules)
+
+            if pos.colliderect(easy) and event.type == pygame.MOUSEBUTTONDOWN:
+                return
+
+            if pos.colliderect(medium) and event.type == pygame.MOUSEBUTTONDOWN:
+                return
+
+            if pos.colliderect(hard) and event.type == pygame.MOUSEBUTTONDOWN:
                 return
         pygame.display.flip()
         clock.tick(FPS)
